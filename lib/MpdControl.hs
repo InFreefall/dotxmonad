@@ -28,10 +28,23 @@ allSongsInPlaylist = do
 pairsToDmenuString :: [(String, Id)] -> String
 pairsToDmenuString = unlines . map fst
 
+selectSong :: IO (Maybe Id)
 selectSong = do
   songs <- allSongsInPlaylist
   let input = pairsToDmenuString songs
   choice <- runProcessWithInput "dmenu" ["-i"] input
-  unless (null $ choice) $ case (init choice) `lookup` songs of
+  if null choice
+     then return Nothing
+    else return $ (init choice) `lookup` songs
+
+selectPlaySong = do
+  choice <- selectSong
+  case choice of
     Just songID -> trace (show songID) $ (withMPD $ playId songID) >> return ()
+    Nothing -> return ()
+
+selectQueueSong = do
+  choice <- selectSong
+  case choice of
+    Just songID -> (withMPD $ moveId songID (-1)) >> return ()
     Nothing -> return ()

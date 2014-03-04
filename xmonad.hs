@@ -1,3 +1,4 @@
+import Control.Monad
 import qualified Data.ByteString.Char8 as B
 import MpdControl
 import Network.MPD hiding ((=?))
@@ -8,7 +9,7 @@ import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
 import XMonad.Layout.NoBorders
 import qualified XMonad.StackSet as W
-import XMonad.Util.Run (spawnPipe)
+import XMonad.Util.Run
 import XMonad.Util.EZConfig (additionalKeysP)
 import System.IO
 
@@ -22,11 +23,18 @@ playPause = withMPD $ status >>=
 allSongs = listAll (Path $ B.pack "")
 
 recreatePlaylist = withMPD $ do
+  runProcessWithInput "chmod" ["-R", "a+r", "/home/mitchell/Music"] []
+  rescan []
   songs <- allSongs
-  rm (PlaylistName $ B.pack "Xmonad")
-  playlistAdd_ (PlaylistName $ B.pack "Xmonad") (Path $ B.pack "")
-  load (PlaylistName $ B.pack "Xmonad")
+  playlists <- listPlaylists
+  when (name `elem` playlists) $ do
+    load name
+    clear
+    rm name
+  playlistAdd_ name (Path $ B.pack "")
+  load name
   shuffle Nothing
+  where name = (PlaylistName $ B.pack "Xmonad")
 
 myManageHook = composeAll
     [ className =? "Steam" --> doFloat
@@ -53,6 +61,7 @@ main = do
       , ("<XF86AudioPlay>", (liftIO playPause) >> return ())
       , ("<XF86AudioNext>", (liftIO $ withMPD next) >> return ())
       , ("<XF86AudioPrev>", (liftIO $ withMPD previous) >> return ())
-      , ("<F11>", liftIO selectSong)
+      , ("<F10>", liftIO selectQueueSong)
+      , ("<F11>", liftIO selectPlaySong)
       , ("<F12>", liftIO (recreatePlaylist >> return ()))
       ]
