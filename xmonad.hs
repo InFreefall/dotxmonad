@@ -46,7 +46,7 @@ main = do
   withMPD (pause True) -- Don't want music to automatically play on startup
   xmonad $ defaultConfig
     { modMask = mod4Mask
-    , terminal = "konsole"
+    , terminal = "xterm"
     , manageHook = manageDocks <+> myManageHook <+> manageHook defaultConfig
     , layoutHook = lessBorders OnlyFloat $ avoidStruts $ layoutHook defaultConfig
     , logHook = dynamicLogWithPP xmobarPP
@@ -61,6 +61,9 @@ main = do
       , ("<XF86AudioPlay>", (liftIO playPause) >> return ())
       , ("<XF86AudioNext>", (liftIO $ withMPD next) >> return ())
       , ("<XF86AudioPrev>", (liftIO $ withMPD previous) >> return ())
+      -- , ("<F6>", (liftIO $ withMPD previous) >> return ())
+      -- , ("<F7>", (liftIO playPause) >> return ())
+      -- , ("<F8>", (liftIO $ withMPD next) >> return ())
       , ("<F10>", liftIO selectQueueSong)
       , ("<F11>", liftIO selectPlaySong)
       , ("<F12>", liftIO (recreatePlaylist >> return ()))
