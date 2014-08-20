@@ -46,7 +46,7 @@ main = do
   withMPD (pause True) -- Don't want music to automatically play on startup
   xmonad $ defaultConfig
     { modMask = mod4Mask
-    , terminal = "xterm"
+    , terminal = "terminator"
     , manageHook = manageDocks <+> myManageHook <+> manageHook defaultConfig
     , layoutHook = lessBorders OnlyFloat $ avoidStruts $ layoutHook defaultConfig
     , logHook = dynamicLogWithPP xmobarPP

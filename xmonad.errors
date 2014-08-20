@@ -1,0 +1,15 @@
+
+xmonad.hs:4:8:
+    Could not find module ‘Network.MPD’
+    Perhaps you meant
+      Network.BSD (from network-2.5.0.0)
+      Network.TCP (from HTTP-4000.2.17)
+      Network.URI (from network-2.5.0.0)
+    Use -v to see a list of the files searched for.
+
+xmonad.hs:6:8:
+    Could not find module ‘XMonad.Actions.Volume’
+    Perhaps you meant
+      XMonad.Actions.Plane (from xmonad-contrib-0.11.3)
+      XMonad.Actions.Promote (from xmonad-contrib-0.11.3)
+    Use -v to see a list of the files searched for.
