@@ -1,5 +1,10 @@
+{-# LANGUAGE OverloadedStrings #-}
+
+import Control.Applicative
+import Control.Concurrent
 import Control.Monad
 import qualified Data.ByteString.Char8 as B
+import qualified Data.Text as T
 import MpdControl
 import Network.MPD hiding ((=?))
 import XMonad
@@ -14,6 +19,17 @@ import XMonad.Util.EZConfig (additionalKeysP)
 import System.IO
 
 myWorkspaces = ["1","2","3","4","5","6","7","8","9"]
+
+openOnBoot = [ "firefox"
+             , "emacs"
+             , "pavucontrol"
+             ]
+
+doOpenOnBoot = do
+  psOutput <- T.pack <$> runProcessWithInput "ps" ["-e"] ""
+  forM_ openOnBoot $ \progName ->
+    unless (progName `T.isInfixOf` psOutput) $
+      safeSpawnProg (T.unpack progName)
 
 playPause = withMPD $ status >>=
             \st -> case stState st of
@@ -39,16 +55,24 @@ recreatePlaylist = withMPD $ do
 myManageHook = composeAll
     [ className =? "Steam" --> doFloat
     , className =? "Gimp" --> doFloat
-    , isFullscreen --> (doF W.focusDown <+> doFullFloat)]
+    , isFullscreen --> (doF W.focusDown <+> doFullFloat)
+    , className =? "Firefox" --> doShift "2"
+    , className =? "Emacs" --> doShift "3"
+    , className =? "Pavucontrol" --> doShift "9"
+    , className =? "Steam" --> doShift "5"
+    ]
 
 main = do
   xmproc <- spawnPipe "/home/mitchell/.cabal/bin/xmobar /home/mitchell/.xmobarrc"
+  -- This is a hack to make the windows appear after xmonad starts up
+  forkIO $ threadDelay 500000 >> doOpenOnBoot
   withMPD (pause True) -- Don't want music to automatically play on startup
   xmonad $ defaultConfig
     { modMask = mod4Mask
     , terminal = "terminator"
     , manageHook = manageDocks <+> myManageHook <+> manageHook defaultConfig
-    , layoutHook = lessBorders OnlyFloat $ avoidStruts $ layoutHook defaultConfig
+    -- , layoutHook = lessBorders OnlyFloat $ avoidStruts $ layoutHook defaultConfig
+    , layoutHook = noBorders $ avoidStruts $ layoutHook defaultConfig
     , logHook = dynamicLogWithPP xmobarPP
                 {
                   ppOutput = hPutStrLn xmproc
@@ -67,4 +91,8 @@ main = do
       , ("<F10>", liftIO selectQueueSong)
       , ("<F11>", liftIO selectPlaySong)
       , ("<F12>", liftIO (recreatePlaylist >> return ()))
+      , ("M-m", sendMessage ToggleStruts)
+      , ("M-f", safeSpawnProg "firefox")
+      , ("M-s", unsafeSpawn "import -window root /home/mitchell/xwd-$(date +%s)$$.png")
+      , ("M-e", safeSpawnProg "emacs")
       ]
