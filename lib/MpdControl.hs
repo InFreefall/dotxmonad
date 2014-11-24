@@ -12,7 +12,7 @@ pairForSong :: Song -> Maybe (String, Id)
 pairForSong song = do
   songID <- sgId song
   let tags = sgTags song
-  songTitles <- Title `M.lookup` tags 
+  songTitles <- Title `M.lookup` tags
   case songTitles of
     [Value titleBS] -> return (B.unpack titleBS, songID)
 
@@ -38,6 +38,7 @@ selectSong = do
     else return $ (init choice) `lookup` songs
 
 selectPlaySong = do
+  withMPD $ shuffle Nothing
   choice <- selectSong
   case choice of
     Just songID -> trace (show songID) $ (withMPD $ playId songID) >> return ()

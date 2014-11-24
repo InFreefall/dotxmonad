@@ -4,14 +4,17 @@ import Control.Applicative
 import Control.Concurrent
 import Control.Monad
 import qualified Data.ByteString.Char8 as B
+import Data.Monoid
 import qualified Data.Text as T
 import MpdControl
 import Network.MPD hiding ((=?))
 import XMonad
 import XMonad.Actions.Volume
+import XMonad.Actions.NoBorders
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageDocks
 import XMonad.Hooks.ManageHelpers
+import XMonad.Layout.Fullscreen
 import XMonad.Layout.NoBorders
 import qualified XMonad.StackSet as W
 import XMonad.Util.Run
@@ -60,7 +63,16 @@ myManageHook = composeAll
     , className =? "Emacs" --> doShift "3"
     , className =? "Pavucontrol" --> doShift "9"
     , className =? "Steam" --> doShift "5"
+    , className =? "dota_linux" --> (ask >>= \w -> liftX (toggleBorder w) >> idHook)
     ]
+
+removeBordersEventHook :: Event -> X All
+removeBordersEventHook ev = do
+    whenX (className =? "dota_linux" `runQuery` w) $ withDisplay $ \d ->
+        io $ setWindowBorderWidth d w 0
+    return (All True)
+    where
+        w = ev_window ev
 
 main = do
   xmproc <- spawnPipe "/home/mitchell/.cabal/bin/xmobar /home/mitchell/.xmobarrc"
@@ -69,8 +81,9 @@ main = do
   withMPD (pause True) -- Don't want music to automatically play on startup
   xmonad $ defaultConfig
     { modMask = mod4Mask
-    , terminal = "terminator"
+    , terminal = "urxvt"
     , manageHook = manageDocks <+> myManageHook <+> manageHook defaultConfig
+    , handleEventHook = fullscreenEventHook <+> removeBordersEventHook
     -- , layoutHook = lessBorders OnlyFloat $ avoidStruts $ layoutHook defaultConfig
     , layoutHook = noBorders $ avoidStruts $ layoutHook defaultConfig
     , logHook = dynamicLogWithPP xmobarPP
